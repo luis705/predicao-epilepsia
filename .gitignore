@@ -1,0 +1,15 @@
+# Diretórios indesejados
+Imagens relatório/*
+Referencias/*
+
+# Extensões indesejadas
+*.pptx
+*.ppt
+*.docx
+*.doc
+*.mp4
+*.zip
+*.txt
+
+# Virtualenvs
+*/venv/*
