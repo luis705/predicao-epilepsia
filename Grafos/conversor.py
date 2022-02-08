@@ -26,7 +26,10 @@ os.chdir(diretorio)
 for file in tqdm(os.listdir()):
     if 'data' in file:
         df = pd.read_csv(file)
-        del df['Time']
+        try:
+            del df['Time']
+        except KeyError:
+            pass
         for coluna in range(19, 24):
             try:
                 del df[str(coluna)]  # remove canais desnecessários
