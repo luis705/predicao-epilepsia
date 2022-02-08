@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "iniciação científica"
+version = "0.1.0"
+description = ""
+authors = ["luis705 <luisotaviolamorim@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "3.8"
+pandas = "^1.4.0"
+networkx = "^2.6.3"
+numpy = "^1.22.2"
+tensorflow = "^2.8.0"
+scikit-learn = "^1.0.2"
+PyWavelets = "^1.2.0"
+
+[tool.poetry.dev-dependencies]
+blue = "^0.7.0"
+isort = "^5.10.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
