@@ -7,11 +7,12 @@ authors = ["luis705 <luisotaviolamorim@gmail.com>"]
 [tool.poetry.dependencies]
 python = "3.8"
 pandas = "^1.4.0"
-networkx = "^2.6.3"
-numpy = "^1.22.2"
+networkx = "2.6.2"
+numpy = "^1.18"
 tensorflow = "^2.8.0"
 scikit-learn = "^1.0.2"
 PyWavelets = "^1.2.0"
+tqdm = "^4.62.3"
 
 [tool.poetry.dev-dependencies]
 blue = "^0.7.0"
