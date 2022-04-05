@@ -13,3 +13,4 @@ Referencias/*
 
 # Virtualenvs
 */venv/*
+*__pyenv__/*
