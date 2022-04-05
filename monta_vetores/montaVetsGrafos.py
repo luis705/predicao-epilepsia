@@ -1,31 +1,38 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Modo de uso:
+# ./nomeDoPrograma -e caminhoArqsJanelasEEG/
+
+import getopt
 import math
 import os
+import sys
+import time
 
 import networkx as nx
 import numpy as np
-import pandas as pd
 from tqdm import tqdm
 
 
 def correlaciona(data, min_lag, max_lag):
-    correlacoes = np.zeros((data.shape[1], data.shape[1]))
-    for i in data.columns:
-        for j in data.columns:
+    correlacoes = np.zeros((data.shape[0], data.shape[0]))
+    for i, l1 in enumerate(data):
+        for j, l2 in enumerate(data):
             if i < j:
                 # Inicialmente calcula o coeficiente de correlação de pearson
                 # Porém utilizando uma defasagem variando de acordo com os
                 # parâmetros passados
-                corr = [
-                    data[i].corr(data[j].shift(k)) for k in range(min_lag, max_lag + 1)
-                ]
-
+                corr = []
+                for lag in range(min_lag, max_lag + 1):
+                    d2 = np.roll(l2, lag)
+                    corr.append(np.corrcoef(l1, d2)[0, 1])
                 # Em seguida encontra a maior correlação, em módulo, e adiciona
                 # esse valor à matriz de adjacências
-                correlacoes[i, j] = corr[np.argmax(corr)]
+                correlacoes[i, j] = np.max(np.abs(corr))
 
     # Torna a matriz simétrica
     correlacoes += correlacoes.T
-
     return np.abs(correlacoes)
 
 
@@ -78,7 +85,8 @@ def numero_de_triangulos(grafo):
             vizinhos_j = set(grafo[j]) - vistos
             wij = grafo[i][j]["weight"]
             triangulos += sum(
-                (wij * grafo[i][h]["weight"] * grafo[j][h]["weight"]) ** (1 / 3)
+                (wij * grafo[i][h]["weight"] * grafo[j][h]["weight"])
+                ** (1 / 3)
                 for h in vizinhos_i & vizinhos_j
             )
         yield (i, grau, triangulos)
@@ -99,7 +107,9 @@ def coeficiente_de_agrupamento(grafo):
 
     td_iter = numero_de_triangulos(grafo)
     clusterc = {
-        no: 0 if grau * (grau - 1) <= 0 else 2 * triangulos / (grau * (grau - 1))
+        no: 0
+        if grau * (grau - 1) <= 0
+        else 2 * triangulos / (grau * (grau - 1))
         for no, grau, triangulos in td_iter
     }
 
@@ -107,54 +117,10 @@ def coeficiente_de_agrupamento(grafo):
 
 
 def eficiencia_local(grafo):
-    """
-    Assim como a eficiência global, a local não possuí uma implementação
-    na biblioteca para grafos com pesos, portanto novamente foi feita
-    uma adaptação no código utilizado pela biblioteca para a eficiência
-    local em grafos sem pesos, para adicionar esse parâmetro.
-    """
-
-    eficiencia = {i: 0 for i in grafo}
-    nos_vizinhos = grafo.adj.items()
-
-    for i, vizinho in nos_vizinhos:
-        vizinhos_i = set(vizinho) - {i}
-
-        # Caso o denominador (grau * (grau -1 )) seja negativo
-        # a eficiência local é nula, portanto prossegue para a
-        # próxima iteração
-        grau = sum(grafo[i][j]["weight"] for j in vizinhos_i)
-        denom = grau * (grau - 1)
-        if denom <= 0:
-            continue
-
-        triangulos = 0
-        vistos = set()
-
-        for j in vizinhos_i:
-            # Evita calculos desnecessários
-            vistos.add(j)
-            vizinhos_j = set(grafo[j]) - vistos
-            wij = grafo[i][j]["weight"]
-
-            for h in vizinhos_i & vizinhos_j:
-                # O subgrafo é criado para encontrar o tamanho do caminho
-                # mais curto entre os nós j e h e que passe somente por
-                # vizinhoss diretos de i.
-                subgrafo = nx.ego_graph(grafo, i, radius=1, center=False)
-                distancia = nx.dijkstra_path_length(subgrafo, j, h)
-                distancia = (1 / distancia) if distancia >= 0 else 0
-                triangulos += (wij * grafo[i][h]["weight"] * distancia) ** (1 / 3)
-
-        # A multiplicação por 2 ocorre para não ser necessário fazer o mesmo
-        # cálculo duas vezes. Realizar w_{01} * w_{02} * distancia(1,2) e
-        # w_{02} * w_{01} * distancia(1, 2), porém o último não é cálculado
-        eficiencia[i] += 2 * triangulos / denom
-
-    return eficiencia
+    return nx.local_efficiency(grafo)
 
 
-def tempo_decorrelacao(sinais, intervalo, dados):
+def tempo_decorrelacao(sinais, dados):
     """
     Calcula os tempos de decorrelação de cada um dos 17 canais
     o tempo de decorrelação é o tempo que a correlação de um
@@ -163,12 +129,11 @@ def tempo_decorrelacao(sinais, intervalo, dados):
     """
     decorr_time = list()
     max_k = len(sinais) - 1280
-    to_corr = dados.reset_index(drop=True)
-    for sinal in sinais.columns:
+    to_corr = dados
+    for sinal in sinais.T:
         for k in range(1, max_k):
-            y = sinais[sinal][
-                1280 * intervalo + k : 1280 * (intervalo + k + 1)
-            ].reset_index(drop=True)
+            y = sinais[sinal][k:]
+            auto = np.abs(np.corrcoef(to_corr[sinal], y))
             auto = abs(to_corr[sinal].corr(y))
             if auto <= 0.5 or math.isnan(auto):
                 decorr_time.append(k)
@@ -177,112 +142,54 @@ def tempo_decorrelacao(sinais, intervalo, dados):
     return decorr_time
 
 
-def salva_caracteristicas(paciente, caminho, arquivo):
-    erros = list()
+def salva_caracteristicas(caminho):
+    for arquivo in tqdm(os.listdir(caminho)):
+        # Caregamento do conjunto de dados
+        dados = np.loadtxt(os.path.join(caminho, arquivo)).T
 
-    # Caregamento do conjunto de dados
-    sinais = pd.read_csv(os.path.join(caminho, arquivo))
-    sinais.columns = range(sinais.shape[1])
+        # Criação dos dataframes para salvar as característica
+        corr_vec = []
 
-    # Criação dos dataframes para salvar as característica
-    df_carac = pd.DataFrame(columns=[i for i in range(76)])
-    df_distr = pd.DataFrame(columns=[i for i in range(8)])
-    df_corr = pd.DataFrame(columns=[i for i in range(153)])
-
-    # Iterando sobre intervalos de 5 segundos
-    for intervalo in tqdm(
-        range(sinais.shape[0] // 1280), desc="Intervalo", leave=False
-    ):
-
-        dados = sinais.iloc[1280 * intervalo : 1280 * (intervalo + 1)].reset_index(
-            drop=True
-        )
         # Gera o grafo e retira as caracteristicas
-        try:
-            corr = correlaciona(dados, -5, 5)
-            corr_vec = np.triu(corr).flatten()
-            corr_vec = pd.Series(np.ma.masked_equal(corr_vec, 0).compressed())
+        corr = correlaciona(dados, -5, 5)
+        corr_vec = np.triu(corr).flatten()
 
-            grafo = nx.to_networkx_graph(corr, create_using=nx.Graph)
-            caminhos = dict(nx.all_pairs_dijkstra_path_length(grafo))
+        grafo = nx.to_networkx_graph(corr, create_using=nx.Graph)
+        caminhos = dict(nx.all_pairs_dijkstra_path_length(grafo))
+        # Características locais
+        ex = list(nx.eccentricity(grafo, sp=caminhos).values())
+        centr = list(
+            nx.betweenness_centrality(
+                grafo, weight="weight", normalized=True
+            ).values()
+        )
+        ef_local = [eficiencia_local(grafo)]
+        coef = list(coeficiente_de_agrupamento(grafo).values())
+        locais = [ex, centr, ef_local, coef]
+        # Características globais
+        caminho_carac = nx.average_shortest_path_length(grafo, weight="weight")
+        ef_global = eficiencia_global(grafo, caminhos)
+        raio = min(ex)
+        diametro = max(ex)
+        globais = [caminho_carac, ef_global, raio, diametro]
 
-            # Características locais
-            ex = list(nx.eccentricity(grafo, sp=caminhos).values())
-            centr = list(
-                nx.betweenness_centrality(
-                    grafo, weight="weight", normalized=True
-                ).values()
-            )
-            ef_local = list(eficiencia_local(grafo).values())
-            coef = list(coeficiente_de_agrupamento(grafo).values())
-            locais = [ex, centr, ef_local, coef]
+        # Correlações
+        decorr_time = tempo_decorrelacao(dados, dados)
+        corr_vec = np.append(corr_vec, decorr_time)
 
-            # Características globais
-            caminho_carac = nx.average_shortest_path_length(grafo, weight="weight")
-            ef_global = eficiencia_global(grafo, caminhos)
-            raio = min(ex)
-            diametro = max(ex)
-            globais = [caminho_carac, ef_global, raio, diametro]
+        # Vetor de características de Teoria de Grafos
+        linha_carac = globais
+        for local in locais:
+            linha_carac = np.append(linha_carac, local)
 
-            # Correlações
-            decorr_time = tempo_decorrelacao(sinais, intervalo, dados)
-            corr_vec = corr_vec.append(pd.Series(decorr_time), ignore_index=True)
-
-            # Linha para o df com todas as características
-            linha_carac = pd.Series(data=globais)
-            for local in locais:
-                linha_carac = linha_carac.append(pd.Series(local), ignore_index=True)
-
-            # Linha para o df com as distribuições
-            linha_distr = pd.Series(data=globais)
-            linha_distr = linha_distr.append(
-                pd.Series([sum(carac) / len(carac) for carac in locais]),
-                ignore_index=True,
-            )
-
-            # Adicionando as linhas aos dfs
-            df_carac = df_carac.append(linha_carac, ignore_index=True)
-            df_distr = df_distr.append(linha_distr, ignore_index=True)
-            df_corr = df_corr.append(corr_vec, ignore_index=True)
-
-        except ValueError:
-            # Caso haja erros nos EEG's nesse intervalo
-            erros.append(intervalo)
-
-    df_carac.to_csv(
-        os.path.join("características", paciente, "Todas", arquivo), index=False
-    )
-    df_distr.to_csv(
-        os.path.join("características", paciente, "Distribuições", arquivo),
-        index=False,
-    )
-    df_corr.to_csv(
-        os.path.join("características", paciente, "Correlações", arquivo),
-        index=False,
-    )
-
-    if erros != []:
-        with open(
-            os.path.join("características", paciente, "Problemas.txt"), mode="a"
-        ) as f:
-            f.write(f"{arquivo}:\n")
-            for erro in erros:
-                f.write(f"\t{erro * 5}s até {(erro + 1) * 5}s\n")
-    erros = []
+        # Adicionando as linhas aos dfs
+        np.savetxt(f"grafos{arquivo[3:]}", linha_carac)
+        np.savetxt(f"corr{arquivo[3:]}", corr_vec)
 
 
 if __name__ == "__main__":
-    pacientes = ["Paciente 01"]
-    for paciente in tqdm(pacientes, desc="Pacientes"):
-        for pasta in ["Todas", "Distribuições", "Correlações"]:
-            if not os.path.exists(os.path.join("características", paciente, pasta)):
-                os.makedirs(os.path.join("características", paciente, pasta))
-
-        terminados = os.listdir(
-            os.path.join("características", paciente, "Correlações")
-        )
-        arquivos = os.listdir(os.path.join("data", paciente))
-        falta = [arquivo for arquivo in arquivos if arquivo not in terminados]
-
-        for arquivo in tqdm(falta, desc="Arquivos"):
-            salva_caracteristicas(paciente, os.path.join("data", paciente), arquivo)
+    optlist, args = getopt.gnu_getopt(sys.argv[1:], "e:")
+    for (opcao, argumento) in optlist:
+        if opcao == "-e":
+            caminhoArqsEEG = argumento
+    salva_caracteristicas(caminhoArqsEEG)
