@@ -183,8 +183,8 @@ def salva_caracteristicas(caminho):
             linha_carac = np.append(linha_carac, local)
 
         # Adicionando as linhas aos dfs
-        np.savetxt(f"grafos{arquivo[3:]}", linha_carac)
-        np.savetxt(f"corr{arquivo[3:]}", corr_vec)
+        np.savetxt(f"grafos{arquivo[3:]}", linha_carac.T)
+        np.savetxt(f"corr{arquivo[3:]}", corr_vec.T)
 
 
 if __name__ == "__main__":
