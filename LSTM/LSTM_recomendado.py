@@ -1,16 +1,3 @@
-"""
-COMO USAR:
-    python .\LSTM_Tsiouris.py
-        -d nome_do_diretório_com_sequencias
-
-    Seguir as instruções certinho dos inputs
-    fará com que dois arquivos sejam criados
-    sendo um .txt e um .png, o .txt com os 
-    resultados do teste e o .png com o formato
-    do modelo criado
-
-"""
-
 import os
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -58,9 +45,12 @@ def resultado():
     )
 
 
-seq_dir = os.path.join("..", "sequencias", "Correlacoes")
-x = []
-y = []
+seq_dir = os.path.join("..", "sequencias", "CHB01", "Correlacao")
+x_treino = []
+y_treino = []
+x_teste = []
+y_teste = []
+
 for file in tqdm(os.listdir(seq_dir)):
     seq = np.loadtxt(os.path.join(seq_dir, file))
     if np.isnan(seq).any():
@@ -68,28 +58,36 @@ for file in tqdm(os.listdir(seq_dir)):
     rotulo = 0
     if "Preictal" in file:
         rotulo = 1
-    x.append(seq)
-    y.append(rotulo)
+    if "Treino" in file:
+        x_treino.append(seq)
+        y_treino.append(rotulo)
+    else:
+        x_teste.append(seq)
+        y_teste.append(rotulo)
 
-x = np.array(x)
-y = np.array(y)
+x_treino = np.array(x_treino)
+x_teste = np.array(x_teste)
+y_treino = np.array(y_treino)
+y_teste = np.array(y_teste)
 
-formato = x.shape
+formato = x_treino.shape
 scaler = MinMaxScaler(feature_range=(-1, 1))
-tmp = x.reshape(-1, 1)
+tmp = x_treino.reshape(-1, 1)
 scaler.fit(tmp)
-x = scaler.transform(tmp).reshape(formato)
+x_treino = scaler.transform(tmp).reshape(formato)
+x_teste = scaler.transform(x_teste.reshape(-1, 1)).reshape(x_teste.shape)
 
-# Randomiza entradas e saídas
-x_treino, x_teste, y_treino, y_teste = train_test_split(x, y, test_size=0.2)
-
+print(x_treino.shape)
+print(y_treino.shape)
+print(x_teste.shape)
+print(y_teste.shape)
 # Cria e treina o modelo
 model = Sequential()
 model.add(
     LSTM(
         128,
         return_sequences=True,
-        batch_input_shape=(1, x.shape[1], x.shape[2]),
+        batch_input_shape=(1, x_treino.shape[1], x_treino.shape[2]),
     )
 )
 model.add(LSTM(128, stateful=False))
@@ -103,6 +101,8 @@ early_stopping = EarlyStopping(
     restore_best_weights=True,
 )
 resultado()
+print(y_treino)
+print(y_teste)
 model.fit(
     x_treino,
     y_treino,
