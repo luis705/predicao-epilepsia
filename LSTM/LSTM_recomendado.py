@@ -1,12 +1,14 @@
+import getopt
 import os
+import sys
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
+import matplotlib.pyplot as plt
 import numpy as np
 from keras.callbacks import EarlyStopping
 from keras.layers import LSTM, Dense
 from keras.models import Sequential
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
 
@@ -45,7 +47,11 @@ def resultado():
     )
 
 
-seq_dir = os.path.join("..", "sequencias", "CHB01", "Correlacao")
+optlist, args = getopt.gnu_getopt(sys.argv[1:], "e:")
+for (opcao, argumento) in optlist:
+    if opcao == "-e":
+        seq_dir = argumento
+
 x_treino = []
 y_treino = []
 x_teste = []
@@ -53,6 +59,8 @@ y_teste = []
 
 for file in tqdm(os.listdir(seq_dir)):
     seq = np.loadtxt(os.path.join(seq_dir, file))
+    if seq.size == 0:
+        continue
     if np.isnan(seq).any():
         continue
     rotulo = 0
@@ -81,16 +89,18 @@ print(x_treino.shape)
 print(y_treino.shape)
 print(x_teste.shape)
 print(y_teste.shape)
+print(y_treino)
+print(y_teste)
 # Cria e treina o modelo
 model = Sequential()
 model.add(
     LSTM(
-        128,
+        32,
         return_sequences=True,
         batch_input_shape=(1, x_treino.shape[1], x_treino.shape[2]),
     )
 )
-model.add(LSTM(128, stateful=False))
+# model.add(LSTM(128, stateful=False))
 model.add(Dense(1))
 model.compile(loss="mean_squared_error", optimizer="adam", metrics="accuracy")
 epocas = 1000
@@ -103,7 +113,7 @@ early_stopping = EarlyStopping(
 resultado()
 print(y_treino)
 print(y_teste)
-model.fit(
+history = model.fit(
     x_treino,
     y_treino,
     epochs=epocas,
@@ -113,3 +123,16 @@ model.fit(
     callbacks=[early_stopping],
 )
 resultado()
+
+f, axs = plt.subplots(2, 1)
+axs[0].plot(history.history["val_accuracy"], label="Validação")
+axs[0].plot(history.history["accuracy"], label="Treino")
+axs[0].set_title("Acurácia")
+axs[0].legend()
+
+axs[1].plot(history.history["val_loss"], label="Validação")
+axs[1].plot(history.history["loss"], label="Treino")
+axs[1].set_title("Erro")
+axs[1].legend()
+
+plt.show()

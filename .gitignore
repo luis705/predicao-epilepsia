@@ -10,9 +10,10 @@ Referencias/*
 *.mp4
 *.zip
 *.txt
+*.gz
 
 # Virtualenvs
 */venv/*
-*__pyenv__/*
+*/__pyenv__/*
 .poetry.lock
 .python_version

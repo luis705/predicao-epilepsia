@@ -1,7 +1,10 @@
+import getopt
 import os
+import sys
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
+import matplotlib.pyplot as plt
 import numpy as np
 from keras.callbacks import EarlyStopping
 from keras.layers import LSTM, Dense
@@ -45,9 +48,15 @@ def resultado():
     )
 
 
-seq_dir = os.path.join("..", "sequencias", "Correlacoes")
+optlist, args = getopt.gnu_getopt(sys.argv[1:], "e:")
+for (opcao, argumento) in optlist:
+    if opcao == "-e":
+        seq_dir = argumento
+
+
 x = []
 y = []
+print(seq_dir)
 for file in tqdm(os.listdir(seq_dir)):
     seq = np.loadtxt(os.path.join(seq_dir, file))
     if np.isnan(seq).any():
@@ -82,7 +91,7 @@ model.add(
 model.add(LSTM(128, stateful=False))
 model.add(Dense(1))
 model.compile(loss="mean_squared_error", optimizer="adam", metrics="accuracy")
-epocas = 1000
+epocas = 100
 early_stopping = EarlyStopping(
     monitor="val_loss",
     patience=10,
@@ -90,7 +99,7 @@ early_stopping = EarlyStopping(
     restore_best_weights=True,
 )
 resultado()
-model.fit(
+history = model.fit(
     x_treino,
     y_treino,
     epochs=epocas,
@@ -100,3 +109,16 @@ model.fit(
     callbacks=[early_stopping],
 )
 resultado()
+
+f, axs = plt.subplots(2, 1)
+axs[0].plot(history.history["val_accuracy"], label="Validação")
+axs[0].plot(history.history["accuracy"], label="Treino")
+axs[0].set_title("Acurácia")
+axs[0].legend()
+
+axs[1].plot(history.history["val_loss"], label="Validação")
+axs[1].plot(history.history["loss"], label="Treino")
+axs[1].set_title("Erro")
+axs[1].legend()
+
+plt.show()

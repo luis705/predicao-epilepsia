@@ -8,7 +8,6 @@ import getopt
 import math
 import os
 import sys
-import time
 
 import networkx as nx
 import numpy as np
@@ -85,8 +84,7 @@ def numero_de_triangulos(grafo):
             vizinhos_j = set(grafo[j]) - vistos
             wij = grafo[i][j]["weight"]
             triangulos += sum(
-                (wij * grafo[i][h]["weight"] * grafo[j][h]["weight"])
-                ** (1 / 3)
+                (wij * grafo[i][h]["weight"] * grafo[j][h]["weight"]) ** (1 / 3)
                 for h in vizinhos_i & vizinhos_j
             )
         yield (i, grau, triangulos)
@@ -107,9 +105,7 @@ def coeficiente_de_agrupamento(grafo):
 
     td_iter = numero_de_triangulos(grafo)
     clusterc = {
-        no: 0
-        if grau * (grau - 1) <= 0
-        else 2 * triangulos / (grau * (grau - 1))
+        no: 0 if grau * (grau - 1) <= 0 else 2 * triangulos / (grau * (grau - 1))
         for no, grau, triangulos in td_iter
     }
 
@@ -144,47 +140,60 @@ def tempo_decorrelacao(sinais, dados):
 
 def salva_caracteristicas(caminho):
     for arquivo in tqdm(os.listdir(caminho)):
-        # Caregamento do conjunto de dados
-        dados = np.loadtxt(os.path.join(caminho, arquivo)).T
+        try:
+            # Caregamento do conjunto de dados
+            dados = np.loadtxt(os.path.join(caminho, arquivo)).T
+            # Criação dos dataframes para salvar as característica
+            corr_vec = []
 
-        # Criação dos dataframes para salvar as característica
-        corr_vec = []
+            # Gera o grafo e retira as caracteristicas
+            corr = np.abs(correlaciona(dados, -5, 5))
+            corr = np.nan_to_num(corr)
+            corr_vec = np.triu(corr).flatten()
+            if np.any(corr_vec < 0):
+                print(corr_vec)
 
-        # Gera o grafo e retira as caracteristicas
-        corr = correlaciona(dados, -5, 5)
-        corr_vec = np.triu(corr).flatten()
+            grafo = nx.to_networkx_graph(corr, create_using=nx.Graph)
 
-        grafo = nx.to_networkx_graph(corr, create_using=nx.Graph)
-        caminhos = dict(nx.all_pairs_dijkstra_path_length(grafo))
-        # Características locais
-        ex = list(nx.eccentricity(grafo, sp=caminhos).values())
-        centr = list(
-            nx.betweenness_centrality(
-                grafo, weight="weight", normalized=True
-            ).values()
-        )
-        ef_local = [eficiencia_local(grafo)]
-        coef = list(coeficiente_de_agrupamento(grafo).values())
-        locais = [ex, centr, ef_local, coef]
-        # Características globais
-        caminho_carac = nx.average_shortest_path_length(grafo, weight="weight")
-        ef_global = eficiencia_global(grafo, caminhos)
-        raio = min(ex)
-        diametro = max(ex)
-        globais = [caminho_carac, ef_global, raio, diametro]
+            caminhos = dict(nx.all_pairs_dijkstra_path_length(grafo))
+            # Características locais
+            try:
+                ex = list(nx.eccentricity(grafo, sp=caminhos).values())
+            except nx.NetworkXException:
+                ex = [0 for _, _ in enumerate(corr)]
+            centr = list(
+                nx.betweenness_centrality(
+                    grafo, weight="weight", normalized=True
+                ).values()
+            )
+            ef_local = [eficiencia_local(grafo)]
+            coef = list(coeficiente_de_agrupamento(grafo).values())
+            locais = [ex, centr, ef_local, coef]
+            # Características globais
+            try:
+                caminho_carac = nx.average_shortest_path_length(grafo, weight="weight")
+            except nx.NetworkXException:
+                caminho_carac = 0
+            ef_global = eficiencia_global(grafo, caminhos)
+            raio = min(ex)
+            diametro = max(ex)
+            globais = [caminho_carac, ef_global, raio, diametro]
 
-        # Correlações
-        decorr_time = tempo_decorrelacao(dados, dados)
-        corr_vec = np.append(corr_vec, decorr_time)
+            # Correlações
+            decorr_time = tempo_decorrelacao(dados, dados)
+            corr_vec = np.append(corr_vec, decorr_time)
 
-        # Vetor de características de Teoria de Grafos
-        linha_carac = globais
-        for local in locais:
-            linha_carac = np.append(linha_carac, local)
+            # Vetor de características de Teoria de Grafos
+            linha_carac = globais
+            for local in locais:
+                linha_carac = np.append(linha_carac, local)
 
-        # Adicionando as linhas aos dfs
-        np.savetxt(f"grafos{arquivo[3:]}", linha_carac.T)
-        np.savetxt(f"corr{arquivo[3:]}", corr_vec.T)
+            # Adicionando as linhas aos dfs
+            np.savetxt(f"grafos{arquivo[3:]}", linha_carac.T)
+            np.savetxt(f"corr{arquivo[3:]}", corr_vec.T)
+        except ValueError as e:
+            print(e)
+            continue
 
 
 if __name__ == "__main__":
