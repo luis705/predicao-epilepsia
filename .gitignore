@@ -1,6 +1,7 @@
 # Diretórios indesejados
 Imagens relatório/*
 Referencias/*
+*/__pycache__/*
 
 # Extensões indesejadas
 *.pptx
@@ -11,6 +12,7 @@ Referencias/*
 *.zip
 *.txt
 *.gz
+
 
 # Virtualenvs
 */venv/*

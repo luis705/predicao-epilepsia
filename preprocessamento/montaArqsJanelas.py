@@ -12,10 +12,7 @@ from tkinter import messagebox
 
 class Packing:
     def __init__( self, objeto_Tk ):
-        self.duracJanelaSegundos = 5
         self.numAmostrasPorSegundo = 256
-        self.numAmostrasPorJanela = self.duracJanelaSegundos * \
-            self.numAmostrasPorSegundo
         objeto_Tk.title( "Monta arquivos com janelas de amostras de EEG segundo Tsiouris et al.." )
 
         self.frNomeArqSumario = Frame( objeto_Tk )
@@ -55,6 +52,16 @@ class Packing:
         self.entryDuracaoPosIctal = Entry( self.frParams, width = 3 )
         self.entryDuracaoPosIctal.insert( END, '10' )
         self.entryDuracaoPosIctal.pack( side = LEFT )
+
+        self.txtVarDuracaoJanela = StringVar()
+        self.txtVarDuracaoJanela.set( 'duração de cada janela de EEG (segundos):' )
+        self.lbDuracaoJanela = Label( self.frParams,
+                                      textvariable = self.txtVarDuracaoJanela,
+                                      fg = 'darkblue',
+                                      height = 3 ).pack( side = LEFT )
+        self.entryDuracaoJanela = Entry( self.frParams, width = 3 )
+        self.entryDuracaoJanela.insert( END, '5' )
+        self.entryDuracaoJanela.pack( side = LEFT )
 
         self.frLocArqEEG = Frame( objeto_Tk )
         self.frLocArqEEG.pack()
@@ -135,8 +142,7 @@ class Packing:
                                                 command = self.prssBtEscolhaCrisesConcluida )
 
         strAux = 'proporção p/ treino (%)\n' + \
-                 'calculada em relação à classe\n' + \
-                 'com menos janelas'
+                 'calculada em relação a cada classe'
         self.lbEscolherPropTreino = Label( self.frLtCrisesTreino,
                                            text =  strAux )
         self.intVarEscolherPropTreino = IntVar()
@@ -145,8 +151,7 @@ class Packing:
                                            variable = self.intVarEscolherPropTreino )
 
         strAux = 'proporção p/ teste (%)\n' + \
-                 'calculada em relação à classe\n' + \
-                 'com menos janelas'
+                 'calculada em relação a cada classe'
         self.lbEscolherPropTeste = Label( self.frLtCrisesTeste,
                                            text =  strAux )
         self.intVarEscolherPropTeste = IntVar()
@@ -252,8 +257,6 @@ class Packing:
         strAux = self.txtVarCrisesTreino.get()
         strAux += strMensagem
         self.txtVarCrisesTreino.set( strAux )
-        self.numJanTotalTreino = min( self.numJanTotalInterictalTreino, self.numJanTotalPreIctalTreino )
-        print( '\nnúmero de janelas disponíveis para treino:', self.numJanTotalTreino )
 
     def prssBtEscolherCrisesTeste( self ):
         selecionados = self.lBxLtCrisesTeste.curselection()
@@ -328,13 +331,14 @@ class Packing:
         strAux = self.txtVarCrisesTeste.get()
         strAux += strMensagem
         self.txtVarCrisesTeste.set( strAux )
-        self.numJanTotalTeste = min( self.numJanTotalInterictalTeste, self.numJanTotalPreIctalTeste )
-        print( '\nnúmero de janelas disponíveis para teste:', self.numJanTotalTeste )
 
     def prssBtLerSumario( self ):
         nomeArqSummaryDoPaciente = self.entryNomeArqSumario.get()
         duracMinutPreIctal = int( self.entryDuracaoPreIctal.get() )
         duracMinutPosIctal = int( self.entryDuracaoPosIctal.get() )
+        self.duracJanelaSegundos = int( self.entryDuracaoJanela.get() )
+        self.numAmostrasPorJanela = self.duracJanelaSegundos * \
+            self.numAmostrasPorSegundo
         self.caminhoPArqsEEGcompactados = self.entryLocArqEEG.get()
         self.caminhoPArqsJanelasEEG = self.entryLocJanEEG.get()
         self.dadosSumario = leSummary.DadosSumario( nomeArqSummaryDoPaciente,
@@ -434,39 +438,45 @@ class Packing:
         self.scEscolherPropTeste.destroy()
         self.btEscolhaPropTreinoTesteConcluida.destroy()
         self.propTreino = self.intVarEscolherPropTreino.get()
+
         print( '\nproporção treino (%):', self.propTreino )
-        self.numJanCadaClasseTreino = int( self.numJanTotalTreino * self.propTreino / 100 )
-        print( 'número de janelas de cada classe para treino:', self.numJanCadaClasseTreino )
-        strMensagem = '\nnúmero de janelas de cada classe para treino: ' + \
-            str(  self.numJanCadaClasseTreino )
+        self.numJanInterictalTreino = int( self.numJanTotalInterictalTreino * self.propTreino / 100 )
+        print( 'número de janelas interictais para treino:', self.numJanInterictalTreino )
+        self.numJanPreIctalTreino = int( self.numJanTotalPreIctalTreino * self.propTreino / 100 )
+        print( 'número de janelas pré-ictais para treino:', self.numJanPreIctalTreino )
+        strMensagem = '\nnúmero de janelas p/ treino: ' + \
+            str(  self.numJanInterictalTreino ) + ' interictais e ' + \
+            str(  self.numJanPreIctalTreino ) + ' pré-ictais.'
         strAux = self.txtVarCrisesTreino.get()
         strAux += strMensagem
         self.txtVarCrisesTreino.set( strAux )
         self.propTeste = self.intVarEscolherPropTeste.get()
         print( 'proporção teste (%):', self.propTeste )
-        self.numJanCadaClasseTeste = int( self.numJanTotalTeste * self.propTeste / 100 )
-        print( 'número de janelas de cada classe para teste:', self.numJanCadaClasseTeste )
-        strMensagem = '\nnúmero de janelas de cada classe para teste: ' + \
-            str(  self.numJanCadaClasseTeste )
+        self.numJanInterictalTeste = int( self.numJanTotalInterictalTeste * self.propTeste / 100 )
+        print( 'número de janelas interictais para teste:', self.numJanInterictalTeste )
+        self.numJanPreIctalTeste = int( self.numJanTotalPreIctalTeste * self.propTeste / 100 )
+        print( 'número de janelas pré-ictais para teste:', self.numJanPreIctalTeste )
+        strMensagem = '\nnúmero de janelas p/ teste: ' + \
+            str(  self.numJanInterictalTeste ) + ' interictais e ' + \
+            str(  self.numJanPreIctalTeste ) + ' pré-ictais.'
         strAux = self.txtVarCrisesTeste.get()
         strAux += strMensagem
         self.txtVarCrisesTeste.set( strAux )
-        self.intervaloInicJanInterictalTreino = self.tTotalInterictalTreino / self.numJanCadaClasseTreino
+        self.intervaloInicJanInterictalTreino = self.tTotalInterictalTreino / self.numJanInterictalTreino
         print( '\nintervalo entre inícios de janelas interictais treino:',
                self.intervaloInicJanInterictalTreino, 's' )
-        self.intervaloInicJanPreIctalTreino = self.tTotalPreIctalTreino / self.numJanCadaClasseTreino
+        self.intervaloInicJanPreIctalTreino = self.tTotalPreIctalTreino / self.numJanPreIctalTreino
         print( 'intervalo entre inícios de janelas pré-ictais treino:',
                self.intervaloInicJanPreIctalTreino, 's' )
-        self.intervaloInicJanInterictalTeste = self.tTotalInterictalTeste / self.numJanCadaClasseTeste
+        self.intervaloInicJanInterictalTeste = self.tTotalInterictalTeste / self.numJanInterictalTeste
         print( 'intervalo entre inícios de janelas interictais teste:',
                self.intervaloInicJanInterictalTeste, 's' )
-        self.intervaloInicJanPreIctalTeste = self.tTotalPreIctalTeste / self.numJanCadaClasseTeste
+        self.intervaloInicJanPreIctalTeste = self.tTotalPreIctalTeste / self.numJanPreIctalTeste
         print( 'intervalo entre inícios de janelas pré-ictais teste:',
                self.intervaloInicJanPreIctalTeste, 's' )
-
         print( '\ninícios de janelas para treino e teste:\n' )
-
-        numAlgarismosArqTreino = math.ceil( math.log10( self.numJanCadaClasseTreino ) )
+        numAlgarismosArqInterictalTreino = math.ceil( math.log10( self.numJanInterictalTreino ) )
+        numAlgarismosArqPreIctalTreino = math.ceil( math.log10( self.numJanPreIctalTreino ) )
         self.ltTInicJanIntericTreino = []
         numJan = 1
         for it in self.ltInterictaisPTreino:
@@ -483,7 +493,7 @@ class Packing:
                     self.ltTInicJanIntericTreino.append( ( self.dicEdfAscii[ nomeArqEDF ], int( tNoArq ) ) )
                     nomeArqJan = self.caminhoPArqsJanelasEEG + \
                         '/janTreinoInterictal_' + \
-                        str( numJan ).zfill( numAlgarismosArqTreino ) + '.txt'
+                        str( numJan ).zfill( numAlgarismosArqInterictalTreino ) + '.txt'
                     umEEG.gravaArqJanela( nomeArqJan,
                                           int( tNoArq * self.numAmostrasPorSegundo ),
                                           self.numAmostrasPorJanela )
@@ -508,7 +518,7 @@ class Packing:
                     self.ltTInicJanPreIcTreino.append( ( self.dicEdfAscii[ nomeArqEDF ], int( tNoArq ) ) )
                     nomeArqJan = self.caminhoPArqsJanelasEEG + \
                         '/janTreinoPreIctal_' + \
-                        str( numJan ).zfill( numAlgarismosArqTreino ) + '.txt'
+                        str( numJan ).zfill( numAlgarismosArqPreIctalTreino ) + '.txt'
                     umEEG.gravaArqJanela( nomeArqJan,
                                           int( tNoArq * self.numAmostrasPorSegundo ),
                                           self.numAmostrasPorJanela )
@@ -516,8 +526,8 @@ class Packing:
                 inicJan += self.intervaloInicJanPreIctalTreino
         print( '\nlista de tempos de inícios de janelas pré-ictais para treino:' )
         print( self.ltTInicJanPreIcTreino )
-
-        numAlgarismosArqTeste = math.ceil( math.log10( self.numJanCadaClasseTeste ) )
+        numAlgarismosArqInterictalTeste = math.ceil( math.log10( self.numJanInterictalTeste ) )
+        numAlgarismosArqPreIctalTeste = math.ceil( math.log10( self.numJanPreIctalTeste ) )
         self.ltTInicJanIntericTeste = []
         numJan = 1
         for it in self.ltInterictaisPTeste:
@@ -534,7 +544,7 @@ class Packing:
                     self.ltTInicJanIntericTeste.append( ( self.dicEdfAscii[ nomeArqEDF ], int( tNoArq ) ) )
                     nomeArqJan = self.caminhoPArqsJanelasEEG + \
                         '/janTesteInterictal_' + \
-                        str( numJan ).zfill( numAlgarismosArqTeste ) + '.txt'
+                        str( numJan ).zfill( numAlgarismosArqInterictalTeste ) + '.txt'
                     umEEG.gravaArqJanela( nomeArqJan,
                                           int( tNoArq * self.numAmostrasPorSegundo ),
                                           self.numAmostrasPorJanela )
@@ -559,7 +569,7 @@ class Packing:
                     self.ltTInicJanPreIcTeste.append( ( self.dicEdfAscii[ nomeArqEDF ], int( tNoArq ) ) )
                     nomeArqJan = self.caminhoPArqsJanelasEEG + \
                         '/janTestePreIctal_' + \
-                        str( numJan ).zfill( numAlgarismosArqTeste ) + '.txt'
+                        str( numJan ).zfill( numAlgarismosArqPreIctalTeste ) + '.txt'
                     umEEG.gravaArqJanela( nomeArqJan,
                                           int( tNoArq * self.numAmostrasPorSegundo ),
                                           self.numAmostrasPorJanela )

@@ -79,16 +79,18 @@ x = scaler.transform(tmp).reshape(formato)
 # Randomiza entradas e saídas
 x_treino, x_teste, y_treino, y_teste = train_test_split(x, y, test_size=0.2)
 
+pesos = {1: 1 - y_treino.sum() / y_treino.shape[0], 0: y_treino.sum() / y_treino.shape[0]}
+print(pesos)
+
 # Cria e treina o modelo
 model = Sequential()
 model.add(
     LSTM(
-        128,
+        32,
         return_sequences=True,
         batch_input_shape=(1, x.shape[1], x.shape[2]),
     )
 )
-model.add(LSTM(128, stateful=False))
 model.add(Dense(1))
 model.compile(loss="mean_squared_error", optimizer="adam", metrics="accuracy")
 epocas = 100
@@ -107,6 +109,7 @@ history = model.fit(
     shuffle=True,
     validation_split=0.2,
     callbacks=[early_stopping],
+    class_weight=pesos
 )
 resultado()
 

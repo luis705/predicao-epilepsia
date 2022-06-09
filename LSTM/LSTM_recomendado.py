@@ -78,6 +78,10 @@ x_teste = np.array(x_teste)
 y_treino = np.array(y_treino)
 y_teste = np.array(y_teste)
 
+
+pesos = {1: 1 - y_treino.sum() / y_treino.shape[0], 0: y_treino.sum() / y_treino.shape[0]}
+print(pesos)
+
 formato = x_treino.shape
 scaler = MinMaxScaler(feature_range=(-1, 1))
 tmp = x_treino.reshape(-1, 1)
@@ -89,8 +93,6 @@ print(x_treino.shape)
 print(y_treino.shape)
 print(x_teste.shape)
 print(y_teste.shape)
-print(y_treino)
-print(y_teste)
 # Cria e treina o modelo
 model = Sequential()
 model.add(
@@ -113,6 +115,7 @@ early_stopping = EarlyStopping(
 resultado()
 print(y_treino)
 print(y_teste)
+
 history = model.fit(
     x_treino,
     y_treino,
@@ -121,6 +124,7 @@ history = model.fit(
     shuffle=True,
     validation_split=0.2,
     callbacks=[early_stopping],
+    class_weight=pesos
 )
 resultado()
 
