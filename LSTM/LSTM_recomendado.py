@@ -10,6 +10,7 @@ from keras.callbacks import EarlyStopping
 from keras.layers import LSTM, Dense
 from keras.models import Sequential
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.utils import class_weight
 from tqdm import tqdm
 
 
@@ -79,7 +80,13 @@ y_treino = np.array(y_treino)
 y_teste = np.array(y_teste)
 
 
-pesos = {1: 1 - y_treino.sum() / y_treino.shape[0], 0: y_treino.sum() / y_treino.shape[0]}
+pesos = dict(
+    enumerate(
+        class_weight.compute_class_weight(
+            "balanced", classes=np.unique(y_treino), y=y_treino
+        )
+    )
+)
 print(pesos)
 
 formato = x_treino.shape
@@ -124,7 +131,7 @@ history = model.fit(
     shuffle=True,
     validation_split=0.2,
     callbacks=[early_stopping],
-    class_weight=pesos
+    class_weight=pesos,
 )
 resultado()
 

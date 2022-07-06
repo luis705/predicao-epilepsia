@@ -142,7 +142,10 @@ def salva_caracteristicas(caminho):
     for arquivo in tqdm(os.listdir(caminho)):
         try:
             # Caregamento do conjunto de dados
-            dados = np.loadtxt(os.path.join(caminho, arquivo)).T
+            try:
+                dados = np.loadtxt(os.path.join(caminho, arquivo)).T
+            except:
+                continue
             # Criação dos dataframes para salvar as característica
             corr_vec = []
 

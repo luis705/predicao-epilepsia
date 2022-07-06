@@ -19,7 +19,10 @@ arqsDirs = os.listdir(caminhoArqsEEG)
 for nomeArqAmostras in tqdm(arqsDirs):
     if nomeArqAmostras.find("jan") == 0:
         nomeCompletoArqAmostras = caminhoArqsEEG + nomeArqAmostras
-        amostras = np.loadtxt(nomeCompletoArqAmostras)
+        try:
+            amostras = np.loadtxt(nomeCompletoArqAmostras)
+        except:
+            continue
         amostrasT = amostras.transpose()
         A = np.fft.fft(amostrasT)
         AT = A.transpose()

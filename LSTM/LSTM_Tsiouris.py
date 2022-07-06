@@ -11,6 +11,7 @@ from keras.layers import LSTM, Dense
 from keras.models import Sequential
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.utils import class_weight
 from tqdm import tqdm
 
 
@@ -79,7 +80,13 @@ x = scaler.transform(tmp).reshape(formato)
 # Randomiza entradas e saídas
 x_treino, x_teste, y_treino, y_teste = train_test_split(x, y, test_size=0.2)
 
-pesos = {1: 1 - y_treino.sum() / y_treino.shape[0], 0: y_treino.sum() / y_treino.shape[0]}
+pesos = dict(
+    enumerate(
+        class_weight.compute_class_weight(
+            "balanced", classes=np.unique(y_treino), y=y_treino
+        )
+    )
+)
 print(pesos)
 
 # Cria e treina o modelo
@@ -109,7 +116,7 @@ history = model.fit(
     shuffle=True,
     validation_split=0.2,
     callbacks=[early_stopping],
-    class_weight=pesos
+    class_weight=pesos,
 )
 resultado()
 

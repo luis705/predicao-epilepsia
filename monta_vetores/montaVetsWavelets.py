@@ -20,7 +20,10 @@ arqsDirs = os.listdir(caminhoArqsEEG)
 for nomeArqAmostras in tqdm(arqsDirs):
     if nomeArqAmostras.find("jan") == 0:
         nomeCompletoArqAmostras = caminhoArqsEEG + nomeArqAmostras
-        amostras = np.loadtxt(nomeCompletoArqAmostras)
+        try:
+            amostras = np.loadtxt(nomeCompletoArqAmostras)
+        except:
+            continue
         amostrasT = amostras.transpose()
         forma = amostrasT.shape
         numCanais = forma[0]

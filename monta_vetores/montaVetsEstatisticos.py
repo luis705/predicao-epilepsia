@@ -20,7 +20,10 @@ arqsDirs = os.listdir(caminhoArqsEEG)
 for nomeArqAmostras in tqdm(arqsDirs):
     if nomeArqAmostras.find("jan") == 0:
         nomeCompletoArqAmostras = caminhoArqsEEG + nomeArqAmostras
-        amostras = np.loadtxt(nomeCompletoArqAmostras)
+        try:
+            amostras = np.loadtxt(nomeCompletoArqAmostras)
+        except:
+            continue
         resultado = stats.describe(amostras)
         juntos = np.array(
             [
@@ -31,7 +34,5 @@ for nomeArqAmostras in tqdm(arqsDirs):
             ]
         )
         vetor = juntos.reshape(1, -1)
-        nomeArqVetorEstatisticos = nomeArqAmostras.replace(
-            "jan", "vetorEstatisticos_"
-        )
+        nomeArqVetorEstatisticos = nomeArqAmostras.replace("jan", "vetorEstatisticos_")
         np.savetxt(nomeArqVetorEstatisticos, abs(vetor))
