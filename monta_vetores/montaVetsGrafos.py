@@ -35,7 +35,12 @@ def correlaciona(data, min_lag, max_lag):
     return np.abs(correlacoes)
 
 
-def eficiencia_global(grafo, caminhos):
+def eficiencia_local(grafo):
+    efficiency_list = (eficiencia_global(grafo.subgraph(grafo[v])) for v in grafo)
+    return sum(efficiency_list) / len(grafo)
+
+
+def eficiencia_global(grafo):
     """
     A biblioteca networkx já possuí uma função que calcula a eficiência
     global, porém nessa implementação os pesos do grafo não são levados
@@ -45,49 +50,20 @@ def eficiencia_global(grafo, caminhos):
 
     n = len(grafo)
     denom = n * (n - 1)
-    if denom == 0:
-        return 0
+    if denom != 0:
+        lengths = nx.all_pairs_dijkstra_path_length(grafo)
+        g_eff = 0
+        for source, targets in lengths:
+            for target, distance in targets.items():
+                if distance > 0:
+                    g_eff += 1 / distance
+        g_eff /= denom
+        
+    else:
+        g_eff = 0
+        
+    return g_eff
 
-    g_eff = 0
-    for destinos in caminhos.values():
-        for distancia in destinos.values():
-            if distancia > 0:
-                # Soma os inversos de todos os pesos do grafo
-                g_eff += 1 / distancia
-
-    return g_eff / denom
-
-
-def numero_de_triangulos(grafo):
-    """
-    Função auxiliar para o cálculo do coeficiente de agrupamento.
-
-    ---
-    Retorna:
-       generator : (nó, grau, triangulos)
-            nó: string contendo o nome do nó
-            grau: grau do nó (soma dos pesos dos links desse nó)
-            triangulos: número de triângulos que esse nó participa
-    """
-
-    nos_vizinhos = grafo.adj.items()
-
-    for i, vizinho in nos_vizinhos:
-        vizinhos_i = set(vizinho) - {i}
-        grau = sum(grafo[i][j]["weight"] for j in vizinhos_i)
-        triangulos = 0
-        vistos = set()
-
-        for j in vizinhos_i:
-            # Evita calculos desnecessários
-            vistos.add(j)
-            vizinhos_j = set(grafo[j]) - vistos
-            wij = grafo[i][j]["weight"]
-            triangulos += sum(
-                (wij * grafo[i][h]["weight"] * grafo[j][h]["weight"]) ** (1 / 3)
-                for h in vizinhos_i & vizinhos_j
-            )
-        yield (i, grau, triangulos)
 
 
 def coeficiente_de_agrupamento(grafo):
@@ -103,17 +79,8 @@ def coeficiente_de_agrupamento(grafo):
     enunciado por Rubinov.
     """
 
-    td_iter = numero_de_triangulos(grafo)
-    clusterc = {
-        no: 0 if grau * (grau - 1) <= 0 else 2 * triangulos / (grau * (grau - 1))
-        for no, grau, triangulos in td_iter
-    }
+    return nx.clustering(grafo)
 
-    return clusterc
-
-
-def eficiencia_local(grafo):
-    return nx.local_efficiency(grafo)
 
 
 def tempo_decorrelacao(sinais, dados):
@@ -142,9 +109,9 @@ def salva_caracteristicas(caminho):
     for arquivo in tqdm(os.listdir(caminho)):
         try:
             # Caregamento do conjunto de dados
-            try:
+            if os.path.getsize(os.path.join(caminho, arquivo)) != 0:
                 dados = np.loadtxt(os.path.join(caminho, arquivo)).T
-            except:
+            else:
                 continue
             # Criação dos dataframes para salvar as característica
             corr_vec = []
@@ -155,9 +122,13 @@ def salva_caracteristicas(caminho):
             corr_vec = np.triu(corr).flatten()
             if np.any(corr_vec < 0):
                 print(corr_vec)
-
-            grafo = nx.to_networkx_graph(corr, create_using=nx.Graph)
-
+            corr_dict = {}
+            for linha_id, linha in enumerate(corr):
+                corr_dict[linha_id] = {}
+                for coluna_id, peso in enumerate(linha):
+                    if peso != 0:
+                        corr_dict[linha_id][coluna_id] = {'weight': peso}
+            grafo = nx.from_dict_of_dicts(corr_dict)
             caminhos = dict(nx.all_pairs_dijkstra_path_length(grafo))
             # Características locais
             try:
@@ -169,7 +140,10 @@ def salva_caracteristicas(caminho):
                     grafo, weight="weight", normalized=True
                 ).values()
             )
-            ef_local = [eficiencia_local(grafo)]
+            try:
+                ef_local = [eficiencia_local(grafo)]
+            except ZeroDivisionError:
+                ef_local = [0]
             coef = list(coeficiente_de_agrupamento(grafo).values())
             locais = [ex, centr, ef_local, coef]
             # Características globais
@@ -177,7 +151,7 @@ def salva_caracteristicas(caminho):
                 caminho_carac = nx.average_shortest_path_length(grafo, weight="weight")
             except nx.NetworkXException:
                 caminho_carac = 0
-            ef_global = eficiencia_global(grafo, caminhos)
+            ef_global = eficiencia_global(grafo)
             raio = min(ex)
             diametro = max(ex)
             globais = [caminho_carac, ef_global, raio, diametro]
@@ -200,8 +174,10 @@ def salva_caracteristicas(caminho):
 
 
 if __name__ == "__main__":
+    np.seterr(all="ignore")
     optlist, args = getopt.gnu_getopt(sys.argv[1:], "e:")
     for (opcao, argumento) in optlist:
         if opcao == "-e":
             caminhoArqsEEG = argumento
     salva_caracteristicas(caminhoArqsEEG)
+    
