@@ -11,6 +11,7 @@ Referencias/*
 *.mp4
 *.zip
 *.txt
+*.gz
 
 
 # Virtualenvs

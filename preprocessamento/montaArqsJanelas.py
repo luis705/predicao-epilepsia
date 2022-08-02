@@ -25,7 +25,7 @@ class Packing:
                                        height = 3 ).pack( side = LEFT )
         self.entryNomeArqSumario = Entry( self.frNomeArqSumario, width = 80 )
         self.entryNomeArqSumario.insert( END,
-                                         '/home/rpires/chb-mit-scalp-eeg-database-1.0.0/' )
+                                         '/home/luis/git/predicao-epilepsia/physionet.org/files/chbmit/1.0.0/' )
         self.entryNomeArqSumario.pack( side = LEFT )
         self.btNomeArqSumario = Button( self.frNomeArqSumario, text = 'procura',
                                         command = self.prssBtNomeArqSumario )
@@ -70,7 +70,7 @@ class Packing:
                                   fg = 'darkblue',
                                   height = 3 ).pack( side = LEFT )
         self.entryLocArqEEG = Entry( self.frLocArqEEG, width = 80 )
-        self.entryLocArqEEG.insert( END, '/home/rpires/chb-mit-scalp-eeg-database-1.0.0' )
+        self.entryLocArqEEG.insert( END, '/home/luis/git/predicao-epilepsia/sinais/' )
         self.entryLocArqEEG.pack( side = LEFT )
         self.btLocArqEEG = Button( self.frLocArqEEG, text = 'procura',
                                    command = self.prssBtLocArqEEG )
@@ -83,7 +83,7 @@ class Packing:
                                   fg = 'darkblue',
                                   height = 3 ).pack( side = LEFT )
         self.entryLocJanEEG = Entry( self.frLocJanEEG, width = 80 )
-        self.entryLocJanEEG.insert( END, '/tmp' )
+        self.entryLocJanEEG.insert( END, '/home/luis/git/predicao-epilepsia/janelas/novo/' )
         self.entryLocJanEEG.pack( side = LEFT )
         self.btLocJanEEG = Button( self.frLocJanEEG, text = 'procura',
                                    command = self.prssBtLocJanEEG )
@@ -170,18 +170,18 @@ class Packing:
 
     def prssBtNomeArqSumario( self ):
         self.strNomeArqSumario = \
-            filedialog.askopenfilename( filetypes = [ ( 'txt', '*.txt' ),
+            filedialog.askopenfilename( initialdir='/home/luis/git/predicao-epilepsia/physionet.org/files/chbmit/1.0.0/', filetypes = [ ( 'txt', '*.txt' ),
                                                       ( 'todos', '*' ) ] )
         self.entryNomeArqSumario.delete( 0, END )
         self.entryNomeArqSumario.insert( 0, self.strNomeArqSumario )
 
     def prssBtLocArqEEG( self ):
-        self.strLocArqEEG = filedialog.askdirectory()
+        self.strLocArqEEG = filedialog.askdirectory(initialdir='/home/luis/git/predicao-epilepsia/sinais/')
         self.entryLocArqEEG.delete( 0, END )
         self.entryLocArqEEG.insert( 0, self.strLocArqEEG )
 
     def prssBtLocJanEEG( self ):
-        self.strLocJanEEG = filedialog.askdirectory()
+        self.strLocJanEEG = filedialog.askdirectory(initialdir='/home/luis/git/predicao-epilepsia/janelas/novo/')
         self.entryLocJanEEG.delete( 0, END )
         self.entryLocJanEEG.insert( 0, self.strLocJanEEG )
 

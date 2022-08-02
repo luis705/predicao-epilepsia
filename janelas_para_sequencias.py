@@ -1,5 +1,8 @@
 import logging
 import os
+import tarfile
+from tqdm import tqdm
+
 
 ARQUIVO = __file__
 logging.basicConfig(
@@ -18,28 +21,30 @@ for numero, paciente in enumerate(possiveis):
 
 while True:
     try:
-        paciente = (
+        tempo = (
             int(
                 input("Digite o número dentro dos colchetes ao lado do tipo desejado: ")
             )
             - 1
         )
-        if paciente > len(possiveis) or paciente < 0:
+        if tempo > len(possiveis) or tempo < 0:
             print("Número de paciente inválido")
         else:
             break
     except ValueError:
         print("Você deve digitar um número")
 
-os.chdir(possiveis[paciente])
-if possiveis[paciente] == "novo":
-    seq_dir = "sequencias_novo"
-    vet_dir = "vetores_novo"
+os.chdir(possiveis[tempo])
+if possiveis[tempo] == "novo":
     janelas_dir = "novo"
 else:
-    seq_dir = "sequencias"
-    vet_dir = "vetores"
     janelas_dir = "antigo"
+if tempo == 0:
+    tempo = 'antigo'
+else:
+    tempo = 'novo'
+seq_dir = "sequencias"
+vet_dir = "vetores"
 
 possiveis = os.listdir()
 possiveis.sort()
@@ -66,38 +71,38 @@ while True:
         print("Você deve digitar um número")
 
 paciente = possiveis[paciente]
+quantidades = [15, 30, 45, 60]
 
-while True:
-    try:
-        quantidade = int(
-            input(
-                "Digite a quantidade de vetores por sequência de vetores para a LSTM: "
-            )
-        )
-        if quantidade >= 2:
-            break
-    except ValueError:
-        print("Você deve digitar um número")
+
 
 # --------------------------- CRIANDO VETORES ------------------------------------
 os.chdir("../..")
-tipos = ["FFT", "Estatisticos", "Grafos", "Wavelets"]
+logging.info("Extraindo diretório de janelas")
+with tarfile.open(os.path.join('janelas', janelas_dir, paciente), 'r:gz') as tar:
+    tar.extractall(os.path.join('janelas', janelas_dir)) 
+paciente = paciente[:-7]
+
+#tipos = ["FFT", "Estatisticos", "Grafos", "Wavelets"]
+tipos = ['Grafos']
 logging.info("Iniciando criação de vetores")
-print(os.getcwd())
+
 for tipo in tipos:
-    if not os.path.exists(f"{vet_dir}/{paciente}/{tipo}"):
-        os.makedirs(f"{vet_dir}/{paciente}/{tipo}")
+    if not os.path.exists(f"{vet_dir}/{paciente}/{tempo}/{tipo}"):
+        os.makedirs(f"{vet_dir}/{paciente}/{tempo}/{tipo}")
     logging.info(f"Vetores de {tipo}")
-    if len(os.listdir(f"{vet_dir}/{paciente}/{tipo}")) == 0:
+    if len(os.listdir(f"{vet_dir}/{paciente}/{tempo}/{tipo}")) == 0:
         os.system(
             f"python monta_vetores/montaVets{tipo}.py -e janelas/{janelas_dir}/{paciente}/"
         )
         for file in os.listdir():
             if file.endswith(".txt"):
-                os.rename(file, os.path.join(vet_dir, paciente, tipo, file))
+                os.rename(file, os.path.join(vet_dir, paciente, tempo, tipo, file))
 
 logging.info("Ajustando correlações e grafos")
-os.chdir(os.path.join("vetores", paciente, "Grafos"))
+if not os.path.exists(os.path.join("vetores", paciente, tempo, "Grafos")):
+    os.makedirs(os.path.join("vetores", paciente, tempo, "Grafos"))
+    os.makedirs(os.path.join("vetores", paciente, tempo, "Correlacao"))
+os.chdir(os.path.join("vetores", paciente, tempo, "Grafos"))
 if not os.path.exists(os.path.join("..", "Correlacao")):
     os.mkdir(os.path.join("..", "Correlacao"))
 for file in os.listdir():
@@ -106,17 +111,19 @@ for file in os.listdir():
 
 tipos.append("Correlacao")
 
-os.chdir("../../..")
+os.chdir("../../../..")
 logging.info("Iniciando criação de sequencias")
-for tipo in tipos:
-    if not os.path.exists(f"{seq_dir}/{paciente}/{quantidade}/{tipo}"):
-        os.makedirs(f"{seq_dir}/{paciente}/{quantidade}/{tipo}")
-    logging.info(f"Sequencias de {tipo} com {quantidade} vetores")
-    os.system(
-        f"python monta_vetores/cria_sequencias.py -t {vet_dir}/{paciente}/{tipo}/ -s {quantidade}"
-    )
-    for file in os.listdir():
-        if file.endswith(".txt"):
-            os.rename(
-                file, os.path.join(seq_dir, paciente, str(quantidade), tipo, file)
+for quantidade in quantidades:
+    for tipo in tipos:
+        if not os.path.exists(f"{seq_dir}/{paciente}/{tempo}/{quantidade}/{tipo}"):
+            os.makedirs(f"{seq_dir}/{paciente}/{tempo}/{quantidade}/{tipo}")
+        logging.info(f"Sequencias de {tipo} com {quantidade} vetores")
+        os.system(
+            f"python monta_vetores/cria_sequencias.py -t {vet_dir}/{paciente}/{tempo}/{tipo}/ -s {quantidade}"
+        )
+        for file in os.listdir():
+            if file.endswith(".txt"):
+                os.rename(
+                    file, os.path.join(seq_dir, paciente, tempo, str(quantidade), tipo, file)
             )
+os.system(f'rm -rf {os.path.join("janelas", janelas_dir, paciente)}')
