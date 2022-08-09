@@ -58,15 +58,6 @@ def resultado(caminho):
         f.write(f"FP: {falsosPositivos}\n")
         f.write(f"TN: {verdadeirosNegativos}\n")
         f.write(f"FN: {falsosNegativos}\n")
-        f.write(
-            f"\nacurácia: {(contaAcertos / verdadeirosNegativos + verdadeirosPositivos + falsosNegativos + falsosPositivos) * 100 :.2f}%\n"
-        )
-        f.write(
-            f"sensibilidade: {verdadeirosPositivos / ( verdadeirosPositivos + falsosNegativos ) * 100 :.2f}%\n"
-        )
-        f.write(
-            f"especificidade: {verdadeirosNegativos / ( verdadeirosNegativos + falsosPositivos ) * 100 :.2f}%\n"
-        )
 
     novo_caminho = caminho[:-4] + " valores.txt"
     with open(novo_caminho, mode="w") as f:
