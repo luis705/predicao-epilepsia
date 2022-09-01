@@ -166,8 +166,12 @@ def salva_caracteristicas(caminho):
                 linha_carac = np.append(linha_carac, local)
 
             # Adicionando as linhas aos dfs
-            np.savetxt(f"grafos{arquivo[3:]}", linha_carac.T)
-            np.savetxt(f"corr{arquivo[3:]}", corr_vec.T)
+            linha_carac = linha_carac.T
+            corr_vec = corr_vec.T
+            np.savetxt(f"grafos{arquivo[3:]}", linha_carac)
+            np.savetxt(f"corr{arquivo[3:]}", corr_vec)
+            corr_grafos = np.append(linha_carac, corr_vec)
+            np.savetxt(f'corr-grafos{arquivo[3:]}', corr_grafos)
         except ValueError as e:
             print(e)
             continue

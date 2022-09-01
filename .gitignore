@@ -1,7 +1,19 @@
 # Diretórios indesejados
+# Relatórios e referências
 Imagens relatório/*
 Referencias/*
+
+#Arquivos de dados
+sequencias/*
+Sinais/*
+Janelas/*
+Resultados/*
+
+# Outros
 */__pycache__/*
+.vscode/*
+Extras/*
+
 
 # Extensões indesejadas
 *.pptx
@@ -17,5 +29,6 @@ Referencias/*
 # Virtualenvs
 */venv/*
 */__pyenv__/*
-.poetry.lock
-.python_version
+poetry.lock
+.python-version
+

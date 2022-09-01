@@ -4,6 +4,7 @@ import sys
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
+
 import matplotlib.pyplot as plt
 import numpy as np
 from keras.callbacks import EarlyStopping
@@ -51,7 +52,6 @@ def resultado(caminho):
         falsosPositivos,
         falsosNegativos,
     ) = metricas(y_teste, rotsPreditos, 0.5)
-    print(verdadeirosPositivos, verdadeirosNegativos, falsosPositivos, falsosNegativos)
     contaAcertos = verdadeirosPositivos + verdadeirosNegativos
     with open(caminho, mode="w") as f:
         f.write(f"TP: {verdadeirosPositivos}\n")
