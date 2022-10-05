@@ -2,9 +2,11 @@ import os
 import tarfile
 
 redes = ["LSTM_recomendado.py", "LSTM_Tsiouris.py"]
-pacientes = list(map(lambda i: f"CHB{i:02}", range(1, 12)))
+#pacientes = list(map(lambda i: f"CHB{i:02}", range(1, 12)))
+#pacientes.append('Herica')
+pacientes = ['CHB01', 'CHB02', 'CHB03']
 #tipos = ["Correlacao", "Grafos"]
-tipos = ['Correlacao', 'Correlacao-Grafos']
+tipos = ['Correlacao', 'Grafos', 'FFT']
 sequencias = [15, 30, 45, 60]
 tempos = ["antigo", "novo"]
 

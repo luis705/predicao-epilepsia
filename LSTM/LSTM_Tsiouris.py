@@ -172,18 +172,19 @@ resultado(
     )
 )
 
-
+print('Iniciando gráfico')
 f, axs = plt.subplots(2, 1, figsize=(8, 6))
 axs[0].plot(history.history["val_accuracy"], label="Validação")
 axs[0].plot(history.history["accuracy"], label="Treino")
 axs[0].set_title("Acurácia")
 axs[0].legend()
 
+print('Fim do primeiro plot')
 axs[1].plot(history.history["val_loss"], label="Validação")
 axs[1].plot(history.history["loss"], label="Treino")
 axs[1].set_title("Erro")
 axs[1].legend()
-
+print('Fim do segundo plot')
 
 pasta_graficos = os.path.join(
     "..",
@@ -195,6 +196,7 @@ pasta_graficos = os.path.join(
 
 if not os.path.exists(pasta_graficos):
     os.makedirs(pasta_graficos)
+print('Salvando gráfico')
 plt.savefig(
     os.path.join(
         pasta_graficos, f"Tsiouris - {int(pastas[4])} vetores por sequência.png"

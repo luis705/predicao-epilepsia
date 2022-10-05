@@ -19,10 +19,11 @@ mne = "^1.0.3"
 imbalanced-learn = "^0.9.1"
 tqdm = "^4.64.0"
 tensorflow-gpu = "^2.9.1"
+xgboost = "^1.6.2"
 
 [tool.poetry.dev-dependencies]
-black = "^22.3.0"
 isort = "^5.10.1"
+blue = "^0.9.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

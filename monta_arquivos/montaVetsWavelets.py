@@ -18,6 +18,15 @@ for (opcao, argumento) in optlist:
         caminhoArqsEEG = argumento
 arqsDirs = os.listdir(caminhoArqsEEG)
 for nomeArqAmostras in tqdm(arqsDirs):
+    with open(os.path.join(caminhoArqsEEG, nomeArqAmostras), mode='r') as arq:
+        try:
+            tamanho = len(arq.readlines())
+        except:
+            print(nomeArqAmostras)
+    if tamanho != 1280:
+        print(f'Arquivo {nomeArqAmostras} inválido com apenas {tamanho} linhas')
+        continue   
+
     if nomeArqAmostras.find("jan") == 0:
         nomeCompletoArqAmostras = caminhoArqsEEG + nomeArqAmostras
         try:

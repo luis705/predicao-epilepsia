@@ -107,6 +107,11 @@ def tempo_decorrelacao(sinais, dados):
 
 def salva_caracteristicas(caminho):
     for arquivo in tqdm(os.listdir(caminho)):
+        with open(os.path.join(caminho, arquivo), mode='r') as arq:
+            tamanho = len(arq.readlines())
+        if tamanho != 1280:
+            print(f'Arquivo {arquivo} inválido com apenas {tamanho} linhas')
+            continue
         try:
             # Caregamento do conjunto de dados
             if os.path.getsize(os.path.join(caminho, arquivo)) != 0:
@@ -170,8 +175,6 @@ def salva_caracteristicas(caminho):
             corr_vec = corr_vec.T
             np.savetxt(f"grafos{arquivo[3:]}", linha_carac)
             np.savetxt(f"corr{arquivo[3:]}", corr_vec)
-            corr_grafos = np.append(linha_carac, corr_vec)
-            np.savetxt(f'corr-grafos{arquivo[3:]}', corr_grafos)
         except ValueError as e:
             print(e)
             continue
