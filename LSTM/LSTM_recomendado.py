@@ -5,6 +5,7 @@ import sys
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from keras.callbacks import EarlyStopping
@@ -15,6 +16,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import class_weight
 from tqdm import tqdm
 
+matplotlib.use('Agg')
 
 class CustomStopper(EarlyStopping):
     def __init__(
