@@ -36,33 +36,11 @@ def correlaciona(data, min_lag, max_lag):
 
 
 def eficiencia_local(grafo):
-    efficiency_list = (eficiencia_global(grafo.subgraph(grafo[v])) for v in grafo)
-    return sum(efficiency_list) / len(grafo)
+    return nx.local_efficiency(grafo)
 
 
 def eficiencia_global(grafo):
-    """
-    A biblioteca networkx já possuí uma função que calcula a eficiência
-    global, porém nessa implementação os pesos do grafo não são levados
-    em consideração. Dessa forma a fuexinção foi recriada, com base na original
-    levando em conta os pesos das ligações dos nós.
-    """
-
-    n = len(grafo)
-    denom = n * (n - 1)
-    if denom != 0:
-        lengths = nx.all_pairs_dijkstra_path_length(grafo)
-        g_eff = 0
-        for source, targets in lengths:
-            for target, distance in targets.items():
-                if distance > 0:
-                    g_eff += 1 / distance
-        g_eff /= denom
-        
-    else:
-        g_eff = 0
-        
-    return g_eff
+    return nx.global_efficiency(grafo)
 
 
 
