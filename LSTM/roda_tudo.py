@@ -22,7 +22,26 @@ for paciente in pacientes:
                         os.makedirs(os.path.join("..", "Gráficos", tempo, paciente, tipo))
                     try:
                         with tarfile.open(pasta + ".tar.gz", "r:gz") as tar:
-                            tar.extractall("/".join(pasta.split("/")[:-1]))
+                            def is_within_directory(directory, target):
+                                
+                                abs_directory = os.path.abspath(directory)
+                                abs_target = os.path.abspath(target)
+                            
+                                prefix = os.path.commonprefix([abs_directory, abs_target])
+                                
+                                return prefix == abs_directory
+                            
+                            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+                            
+                                for member in tar.getmembers():
+                                    member_path = os.path.join(path, member.name)
+                                    if not is_within_directory(path, member_path):
+                                        raise Exception("Attempted Path Traversal in Tar File")
+                            
+                                tar.extractall(path, members, numeric_owner) 
+                                
+                            
+                            safe_extract(tar, "/".join(pasta.split("/")[:-"1"]))
                         os.system(f"python {rede} -e {pasta}")
                         os.system(f"rm -rf {pasta}")
                     except (tarfile.ReadError, FileNotFoundError):
