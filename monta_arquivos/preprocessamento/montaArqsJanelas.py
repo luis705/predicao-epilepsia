@@ -13,7 +13,7 @@ from tkinter import messagebox
 class Packing:
     def __init__( self, objeto_Tk ):
         self.numAmostrasPorSegundo = 256
-        objeto_Tk.title( "Monta arquivos com janelas de amostras de EEG segundo Tsiouris et al.." )
+        objeto_Tk.title( "Monta arquivos com janelas de amostras de EEG - versão 20/03/2023" )
 
         self.frNomeArqSumario = Frame( objeto_Tk )
         self.frNomeArqSumario.pack()
@@ -25,7 +25,7 @@ class Packing:
                                        height = 3 ).pack( side = LEFT )
         self.entryNomeArqSumario = Entry( self.frNomeArqSumario, width = 80 )
         self.entryNomeArqSumario.insert( END,
-                                         '/home/luis/git/predicao-epilepsia/physionet.org/files/chbmit/1.0.0/' )
+                                         '/home/rpires/chb-mit-scalp-eeg-database-1.0.0/' )
         self.entryNomeArqSumario.pack( side = LEFT )
         self.btNomeArqSumario = Button( self.frNomeArqSumario, text = 'procura',
                                         command = self.prssBtNomeArqSumario )
@@ -70,7 +70,7 @@ class Packing:
                                   fg = 'darkblue',
                                   height = 3 ).pack( side = LEFT )
         self.entryLocArqEEG = Entry( self.frLocArqEEG, width = 80 )
-        self.entryLocArqEEG.insert( END, '/home/luis/git/predicao-epilepsia/sinais/' )
+        self.entryLocArqEEG.insert( END, '/home/rpires/chb-mit-scalp-eeg-database-1.0.0' )
         self.entryLocArqEEG.pack( side = LEFT )
         self.btLocArqEEG = Button( self.frLocArqEEG, text = 'procura',
                                    command = self.prssBtLocArqEEG )
@@ -83,7 +83,7 @@ class Packing:
                                   fg = 'darkblue',
                                   height = 3 ).pack( side = LEFT )
         self.entryLocJanEEG = Entry( self.frLocJanEEG, width = 80 )
-        self.entryLocJanEEG.insert( END, '/home/luis/git/predicao-epilepsia/janelas/novo/' )
+        self.entryLocJanEEG.insert( END, '/tmp' )
         self.entryLocJanEEG.pack( side = LEFT )
         self.btLocJanEEG = Button( self.frLocJanEEG, text = 'procura',
                                    command = self.prssBtLocJanEEG )
@@ -170,18 +170,18 @@ class Packing:
 
     def prssBtNomeArqSumario( self ):
         self.strNomeArqSumario = \
-            filedialog.askopenfilename( initialdir='/home/luis/git/predicao-epilepsia/physionet.org/files/chbmit/1.0.0/', filetypes = [ ( 'txt', '*.txt' ),
+            filedialog.askopenfilename( filetypes = [ ( 'txt', '*.txt' ),
                                                       ( 'todos', '*' ) ] )
         self.entryNomeArqSumario.delete( 0, END )
         self.entryNomeArqSumario.insert( 0, self.strNomeArqSumario )
 
     def prssBtLocArqEEG( self ):
-        self.strLocArqEEG = filedialog.askdirectory(initialdir='/home/luis/git/predicao-epilepsia/sinais/')
+        self.strLocArqEEG = filedialog.askdirectory()
         self.entryLocArqEEG.delete( 0, END )
         self.entryLocArqEEG.insert( 0, self.strLocArqEEG )
 
     def prssBtLocJanEEG( self ):
-        self.strLocJanEEG = filedialog.askdirectory(initialdir='/home/luis/git/predicao-epilepsia/janelas/novo/')
+        self.strLocJanEEG = filedialog.askdirectory()
         self.entryLocJanEEG.delete( 0, END )
         self.entryLocJanEEG.insert( 0, self.strLocJanEEG )
 
@@ -210,7 +210,7 @@ class Packing:
                     tIniPreIctal = itInicPeriodo.tIni
                     print( 'tempo fim:   ', tIniPreIctal, 's' )
                     intrvAux = leSummary.IntervaloSeg( tIniInterictal, tIniPreIctal )
-                    self.ltInterictaisPTreino.append( intrvAux )
+                    self.ltInterictaisPTreino.append( ( intrvAux, itInicPeriodo.antesDeQualCrise ) )
                     esperaPreIctal = False
                     duracInterictal = tIniPreIctal - tIniInterictal
                     print( 'duração do interictal:', duracInterictal, 's\n' )
@@ -242,7 +242,7 @@ class Packing:
                     tIniIctal = itInicPeriodo.tIni
                     print( 'tempo fim:   ', tIniIctal, 's' )
                     intrvAux = leSummary.IntervaloSeg( tIniPreIctal, tIniIctal )
-                    self.ltPreIctaisPTreino.append( intrvAux )
+                    self.ltPreIctaisPTreino.append( ( intrvAux, itInicPeriodo.antesDeQualCrise ) )
                     duracPreIctal = tIniIctal - tIniPreIctal
                     print( 'duração do pré-ictal:', duracPreIctal, 's\n' )
                     self.tTotalPreIctalTreino += duracPreIctal
@@ -284,7 +284,7 @@ class Packing:
                     tIniPreIctal = itInicPeriodo.tIni
                     print( 'tempo fim:   ', tIniPreIctal, 's' )
                     intrvAux = leSummary.IntervaloSeg( tIniInterictal, tIniPreIctal )
-                    self.ltInterictaisPTeste.append( intrvAux )
+                    self.ltInterictaisPTeste.append( ( intrvAux, itInicPeriodo.antesDeQualCrise ) )
                     esperaPreIctal = False
                     duracInterictal = tIniPreIctal - tIniInterictal
                     print( 'duração do interictal:', duracInterictal, 's\n' )
@@ -316,7 +316,7 @@ class Packing:
                     tIniIctal = itInicPeriodo.tIni
                     print( 'tempo fim:   ', tIniIctal, 's' )
                     intrvAux = leSummary.IntervaloSeg( tIniPreIctal, tIniIctal )
-                    self.ltPreIctaisPTeste.append( intrvAux )
+                    self.ltPreIctaisPTeste.append( ( intrvAux, itInicPeriodo.antesDeQualCrise ) )
                     duracPreIctal = tIniIctal - tIniPreIctal
                     print( 'duração do pré-ictal:', duracPreIctal, 's\n' )
                     self.tTotalPreIctalTeste += duracPreIctal
@@ -480,8 +480,8 @@ class Packing:
         self.ltTInicJanIntericTreino = []
         numJan = 1
         for it in self.ltInterictaisPTreino:
-            inicJan = it.tIni
-            limite = it.tFin - self.duracJanelaSegundos
+            inicJan = it[ 0 ].tIni
+            limite = it[ 0 ].tFin - self.duracJanelaSegundos
             nomeArqEDFanterior = ' '
             while inicJan < limite:
                 nomeArqEDF, tNoArq = self.dadosSumario.ltTAcumArqEdf.emQualArq( inicJan )
@@ -493,7 +493,8 @@ class Packing:
                     self.ltTInicJanIntericTreino.append( ( self.dicEdfAscii[ nomeArqEDF ], int( tNoArq ) ) )
                     nomeArqJan = self.caminhoPArqsJanelasEEG + \
                         '/janTreinoInterictal_' + \
-                        str( numJan ).zfill( numAlgarismosArqInterictalTreino ) + '.txt'
+                        str( numJan ).zfill( numAlgarismosArqInterictalTreino ) + \
+                        '_crise_' + str( it[ 1 ] ) + '.txt'
                     umEEG.gravaArqJanela( nomeArqJan,
                                           int( tNoArq * self.numAmostrasPorSegundo ),
                                           self.numAmostrasPorJanela )
@@ -505,8 +506,8 @@ class Packing:
         self.ltTInicJanPreIcTreino = []
         numJan = 1
         for it in self.ltPreIctaisPTreino:
-            inicJan = it.tIni
-            limite = it.tFin - self.duracJanelaSegundos
+            inicJan = it[ 0 ].tIni
+            limite = it[ 0 ].tFin - self.duracJanelaSegundos
             nomeArqEDFanterior = ' '
             while inicJan < limite:
                 nomeArqEDF, tNoArq = self.dadosSumario.ltTAcumArqEdf.emQualArq( inicJan )
@@ -518,7 +519,8 @@ class Packing:
                     self.ltTInicJanPreIcTreino.append( ( self.dicEdfAscii[ nomeArqEDF ], int( tNoArq ) ) )
                     nomeArqJan = self.caminhoPArqsJanelasEEG + \
                         '/janTreinoPreIctal_' + \
-                        str( numJan ).zfill( numAlgarismosArqPreIctalTreino ) + '.txt'
+                        str( numJan ).zfill( numAlgarismosArqPreIctalTreino ) + \
+                        '_crise_' + str( it[ 1 ] ) + '.txt'
                     umEEG.gravaArqJanela( nomeArqJan,
                                           int( tNoArq * self.numAmostrasPorSegundo ),
                                           self.numAmostrasPorJanela )
@@ -531,8 +533,8 @@ class Packing:
         self.ltTInicJanIntericTeste = []
         numJan = 1
         for it in self.ltInterictaisPTeste:
-            inicJan = it.tIni
-            limite = it.tFin - self.duracJanelaSegundos
+            inicJan = it[ 0 ].tIni
+            limite = it[ 0 ].tFin - self.duracJanelaSegundos
             nomeArqEDFanterior = ' '
             while inicJan < limite:
                 nomeArqEDF, tNoArq = self.dadosSumario.ltTAcumArqEdf.emQualArq( inicJan )
@@ -544,7 +546,8 @@ class Packing:
                     self.ltTInicJanIntericTeste.append( ( self.dicEdfAscii[ nomeArqEDF ], int( tNoArq ) ) )
                     nomeArqJan = self.caminhoPArqsJanelasEEG + \
                         '/janTesteInterictal_' + \
-                        str( numJan ).zfill( numAlgarismosArqInterictalTeste ) + '.txt'
+                        str( numJan ).zfill( numAlgarismosArqInterictalTeste ) + \
+                        '_crise_' + str( it[ 1 ] ) + '.txt'
                     umEEG.gravaArqJanela( nomeArqJan,
                                           int( tNoArq * self.numAmostrasPorSegundo ),
                                           self.numAmostrasPorJanela )
@@ -556,8 +559,8 @@ class Packing:
         self.ltTInicJanPreIcTeste = []
         numJan = 1
         for it in self.ltPreIctaisPTeste:
-            inicJan = it.tIni
-            limite = it.tFin - self.duracJanelaSegundos
+            inicJan = it[ 0 ].tIni
+            limite = it[ 0 ].tFin - self.duracJanelaSegundos
             nomeArqEDFanterior = ' '
             while inicJan < limite:
                 nomeArqEDF, tNoArq = self.dadosSumario.ltTAcumArqEdf.emQualArq( inicJan )
@@ -569,7 +572,8 @@ class Packing:
                     self.ltTInicJanPreIcTeste.append( ( self.dicEdfAscii[ nomeArqEDF ], int( tNoArq ) ) )
                     nomeArqJan = self.caminhoPArqsJanelasEEG + \
                         '/janTestePreIctal_' + \
-                        str( numJan ).zfill( numAlgarismosArqPreIctalTeste ) + '.txt'
+                        str( numJan ).zfill( numAlgarismosArqPreIctalTeste ) + \
+                        '_crise_' + str( it[ 1 ] ) + '.txt'
                     umEEG.gravaArqJanela( nomeArqJan,
                                           int( tNoArq * self.numAmostrasPorSegundo ),
                                           self.numAmostrasPorJanela )

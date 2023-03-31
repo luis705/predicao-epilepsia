@@ -176,7 +176,7 @@ resultado(
         pastas[3],  # antigo ou novo
         pastas[2],  # paciente
         pastas[5],  # tipo de vetor
-        f"Recomendado - {int(pastas[4])} vetores por sequência.txt",
+        f"Recomendado - {int(pastas[4])} janelas por sequência.txt",
     )
 )
 
@@ -204,7 +204,7 @@ print('Salvando gráfico')
 plt.savefig(
     os.path.join(
         pasta_graficos,
-        f"Recomendado - {int(pastas[4])} vetores por sequência",
+        f"Recomendado - {int(pastas[4])} janelas por sequência",
     )
 )
 """
@@ -214,7 +214,7 @@ metrics.RocCurveDisplay.from_predictions(y_true=y_teste, y_pred=rotsPreditos, na
 plt.savefig(
     os.path.join(
         pasta_graficos,
-        f"Tsiouris - {int(pastas[4])} vetores por sequência - Curva ROC.png",
+        f"Tsiouris - {int(pastas[4])} janelas por sequência - Curva ROC.png",
     )
 )
 
@@ -237,7 +237,7 @@ plt.savefig(
         pastas[3],  # antigo ou novo
         pastas[2],  # paciente
         pastas[5],  # tipo de vetor
-        f"Recomendado - {int(pastas[4])} vetores por sequência - Curva ROC.png",
+        f"Recomendado - {int(pastas[4])} janelas por sequência - Curva ROC.png",
     )
 )
 """

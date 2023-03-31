@@ -9,11 +9,13 @@ Sinais/*
 Janelas/*
 Resultados/*
 Gráficos/*
+Vetores/*
 
 # Outros
-*/__pycache__/*
+**/__pycache__/
 .vscode/*
 Extras/*
+.idea/
 
 
 # Extensões indesejadas
@@ -25,7 +27,7 @@ Extras/*
 *.zip
 *.txt
 *.gz
-
+*.pyc
 
 # Virtualenvs
 */venv/*

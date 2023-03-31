@@ -170,7 +170,7 @@ if not os.path.exists(pasta_resultado):
     os.makedirs(pasta_resultado)
 resultado(
     os.path.join(
-        pasta_resultado, f"Tsiouris - {int(pastas[4])} vetores por sequência.txt"
+        pasta_resultado, f"Tsiouris - {int(pastas[4])} janelas por sequência.txt"
     )
 )
 
@@ -201,7 +201,7 @@ if not os.path.exists(pasta_graficos):
 print('Salvando gráfico')
 plt.savefig(
     os.path.join(
-        pasta_graficos, f"Tsiouris - {int(pastas[4])} vetores por sequência.png"
+        pasta_graficos, f"Tsiouris - {int(pastas[4])} janelas por sequência.png"
     )
 )
 """
@@ -220,7 +220,7 @@ plt.legend()
 plt.savefig(
     os.path.join(
         pasta_graficos,
-        f"Tsiouris - {int(pastas[4])} vetores por sequência - Curva ROC.png",
+        f"Tsiouris - {int(pastas[4])} janelas por sequência - Curva ROC.png",
     )
 )
 
@@ -229,7 +229,7 @@ metrics.RocCurveDisplay.from_predictions(y_true=y_teste, y_pred=rotsPreditos, na
 plt.savefig(
     os.path.join(
         pasta_graficos,
-        f"Tsiouris - {int(pastas[4])} vetores por sequência - Curva ROC.png",
+        f"Tsiouris - {int(pastas[4])} janelas por sequência - Curva ROC.png",
     )
 )
 
@@ -248,7 +248,7 @@ plt.xlabel('False Positive Rate')
 plt.savefig(
     os.path.join(
         pasta_graficos,
-        f"Tsiouris - {int(pastas[4])} vetores por sequência - Curva ROC.png",
+        f"Tsiouris - {int(pastas[4])} janelas por sequência - Curva ROC.png",
     )
 )
 """
