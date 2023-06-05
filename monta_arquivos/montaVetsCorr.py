@@ -1,17 +1,19 @@
 # Modo de uso:
 # ./nomeDoPrograma -e caminhoArqsJanelasEEG/
 
-import math
-import os
+import concurrent.futures
 import getopt
+import math
+import multiprocessing
+import os
 import sys
 from pathlib import Path
-import concurrent.futures
-import multiprocessing
+from warnings import filterwarnings
 
 import numpy as np
-from tqdm import tqdm
 import pandas as pd
+from tqdm import tqdm
+
 
 def correlaciona(data, min_lag, max_lag):
     correlacoes = np.zeros((data.shape[0], data.shape[0]))
@@ -32,6 +34,7 @@ def correlaciona(data, min_lag, max_lag):
     # Torna a matriz simétrica
     correlacoes += correlacoes.T
     return np.abs(correlacoes)
+
 
 def tempo_decorrelacao(sinais, dados):
     """
@@ -58,40 +61,57 @@ def str_float(linha):
     valores = list(linha.str.split())[0]
     return pd.Series([float(a) for a in valores])
 
+
 def salva_caracteristicas(caminho, arquivo):
-    dados = pd.read_parquet(Path(caminho, arquivo))
-    dados = dados.apply(str_float, axis=1).to_numpy().T
+    dados = pd.read_parquet(Path(caminho, arquivo)).to_numpy().T
 
     # Criação dos dataframes para salvar as característica
     corr = np.abs(correlaciona(dados, -5, 5))
     corr = np.nan_to_num(corr)
-    corr_vec = np.triu(corr).flatten()
+
+    mask = np.triu(np.ones(corr.shape), 1) == 1
+    corr_vec = corr[mask]
 
     # Correlações
     decorr_time = tempo_decorrelacao(dados, dados)
     corr_vec = np.append(corr_vec, decorr_time)
 
-
     # Adicionando as linhas aos dfs
-    corr_vec = pd.DataFrame(corr_vec.T)
-    corr_vec.rename(columns={0: '0'}, inplace=True)
-    corr_vec.to_parquet('vetorCorr' + arquivo[3:])
+    corr_vec = pd.DataFrame(corr_vec)
+    caminho_resultado = Path(
+        'vetores', caminho.stem, 'Corr', 'vetorCorr' + arquivo[3:]
+    )
+    corr_vec.to_parquet(caminho_resultado)
 
 
 def processa_todos(caminho):
     arquivos = os.listdir(caminho)
     pbar = tqdm(total=len(arquivos))
-    with concurrent.futures.ProcessPoolExecutor(max_workers=int(multiprocessing.cpu_count() / 1)) as executor:
-        future = [executor.submit(salva_caracteristicas, caminho, arquivo) for arquivo in arquivos]
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=int(multiprocessing.cpu_count() / 1)
+    ) as executor:
+        future = [
+            executor.submit(salva_caracteristicas, caminho, arquivo)
+            for arquivo in arquivos
+        ]
         for _ in concurrent.futures.as_completed(future):
             pbar.update(1)
     pbar.close()
 
 
-if __name__ == "__main__":
-    np.seterr(all="ignore")
-    optlist, args = getopt.gnu_getopt(sys.argv[1:], "e:")
+def processa_sem_paralelo(caminho):
+    arquivos = os.listdir(caminho)
+    for arquivo in tqdm(arquivos):
+        salva_caracteristicas(caminho, arquivo)
+
+
+if __name__ == '__main__':
+    np.seterr(all='ignore')
+    filterwarnings('ignore')
+    optlist, args = getopt.gnu_getopt(sys.argv[1:], 'e:')
     for (opcao, argumento) in optlist:
-        if opcao == "-e":
-            caminhoArqsEEG = argumento
+        if opcao == '-e':
+            caminhoArqsEEG = Path(argumento)
+
     processa_todos(caminhoArqsEEG)
+    # processa_sem_paralelo(caminhoArqsEEG)

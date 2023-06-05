@@ -43,7 +43,6 @@ def eficiencia_global(grafo):
     return nx.global_efficiency(grafo)
 
 
-
 def coeficiente_de_agrupamento(grafo):
     """
     Uma forma de calcular a quantidade de triângulos para grafos
@@ -58,7 +57,6 @@ def coeficiente_de_agrupamento(grafo):
     """
 
     return nx.clustering(grafo)
-
 
 
 def tempo_decorrelacao(sinais, dados):
@@ -120,7 +118,7 @@ def salva_caracteristicas(caminho):
                 ex = [0 for _, _ in enumerate(corr)]
             centr = list(
                 nx.betweenness_centrality(
-                    grafo, weight="weight", normalized=True
+                    grafo, weight='weight', normalized=True
                 ).values()
             )
             try:
@@ -131,7 +129,9 @@ def salva_caracteristicas(caminho):
             locais = [ex, centr, ef_local, coef]
             # Características globais
             try:
-                caminho_carac = nx.average_shortest_path_length(grafo, weight="weight")
+                caminho_carac = nx.average_shortest_path_length(
+                    grafo, weight='weight'
+                )
             except nx.NetworkXException:
                 caminho_carac = 0
             ef_global = eficiencia_global(grafo)
@@ -151,18 +151,17 @@ def salva_caracteristicas(caminho):
             # Adicionando as linhas aos dfs
             linha_carac = linha_carac.T
             corr_vec = corr_vec.T
-            np.savetxt(f"grafos{arquivo[3:]}", linha_carac)
-            np.savetxt(f"corr{arquivo[3:]}", corr_vec)
+            np.savetxt(f'grafos{arquivo[3:]}', linha_carac)
+            np.savetxt(f'corr{arquivo[3:]}', corr_vec)
         except ValueError as e:
             print(e)
             continue
 
 
-if __name__ == "__main__":
-    np.seterr(all="ignore")
-    optlist, args = getopt.gnu_getopt(sys.argv[1:], "e:")
+if __name__ == '__main__':
+    np.seterr(all='ignore')
+    optlist, args = getopt.gnu_getopt(sys.argv[1:], 'e:')
     for (opcao, argumento) in optlist:
-        if opcao == "-e":
+        if opcao == '-e':
             caminhoArqsEEG = argumento
     salva_caracteristicas(caminhoArqsEEG)
-    

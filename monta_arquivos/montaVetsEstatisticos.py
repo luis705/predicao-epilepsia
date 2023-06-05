@@ -12,13 +12,13 @@ import numpy as np
 from scipy import stats
 from tqdm import tqdm
 
-optlist, args = getopt.gnu_getopt(sys.argv[1:], "e:")
+optlist, args = getopt.gnu_getopt(sys.argv[1:], 'e:')
 for (opcao, argumento) in optlist:
-    if opcao == "-e":
+    if opcao == '-e':
         caminhoArqsEEG = argumento
 arqsDirs = os.listdir(caminhoArqsEEG)
 for nomeArqAmostras in tqdm(arqsDirs):
-    if nomeArqAmostras.find("jan") == 0:
+    if nomeArqAmostras.find('jan') == 0:
         nomeCompletoArqAmostras = caminhoArqsEEG + nomeArqAmostras
         try:
             amostras = np.loadtxt(nomeCompletoArqAmostras)
@@ -34,5 +34,7 @@ for nomeArqAmostras in tqdm(arqsDirs):
             ]
         )
         vetor = juntos.reshape(1, -1)
-        nomeArqVetorEstatisticos = nomeArqAmostras.replace("jan", "vetorEstatisticos_")
+        nomeArqVetorEstatisticos = nomeArqAmostras.replace(
+            'jan', 'vetorEstatisticos_'
+        )
         np.savetxt(nomeArqVetorEstatisticos, abs(vetor))
